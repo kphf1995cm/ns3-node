@@ -289,8 +289,13 @@ private:
   ProtocolHandlerList m_handlers; //!< Protocol handlers in the node
   DeviceAdditionListenerList m_deviceAdditionListeners; //!< Device addition listeners in the node
 public:
-  unsigned long m_packetNum;
-  std::unordered_map<unsigned long,unsigned int> m_tupleNum;
+  uint64_t m_packetNum;
+  std::unordered_map<uint64_t,uint32_t> m_tupleNum;
+  uint64_t GetTupleHash(uint32_t protocol,uint32_t srcIp,uint32_t dstIp,uint32_t port)
+  {
+    uint64_t hash=((uint64_t)protocol<<32)+(uint64_t)port+((uint64_t)srcIp<<32)+(uint64_t)dstIp;
+    return hash;
+  }
 };
 
 } // namespace ns3

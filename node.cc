@@ -31,7 +31,11 @@
 #include "ns3/global-value.h"
 #include "ns3/boolean.h"
 #include "ns3/simulator.h"
-
+#include <iomanip>
+#include <cstdio>
+#include <cstring>
+#include <iostream>
+#include <string>
 namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("Node");
@@ -312,13 +316,51 @@ Node::ReceiveFromDevice (Ptr<NetDevice> device, Ptr<const Packet> packet, uint16
                         << ") Packet UID " << packet->GetUid ());
 
   //**********Count Packet**********************************************
-  std::cout<<"*******Node::ReceiveFromDevice***********"<<std::endl;
+  
+  //======Way one: Count All Packet In One Counter======
   m_packetNum++;
-  std::cout<<"Packet Num:"<<m_packetNum<<std::endl;
+  //std::cout<<"Packet Num:"<<m_packetNum<<std::endl;
+  //====================================================
+  std::cout<<"protocol:"<<protocol<<std::endl;
+  std::cout<<"*******Node::ReceiveFromDevice**********************"<<std::endl;
   packet->EnablePrinting();
   packet->Print(std::cout);
   std::cout<<std::endl;
   std::cout<<"****************************************************"<<std::endl; 
+
+  //=====Way two: According Tuple(srcIp,srcPort,protocol,dstIp,dstPort) Count Packet, Need Mutiple Counters=======
+  // Target at Ipv4 Packet, ignore Arp Packet
+  // Algorithm flow: 0 Select Ipv4 Packet According to protocol 1 Copy Packet 2 Extract Tuple From Received Packet 3 Caculate Tuple Hash Value 4 Count  
+  
+  if(protocol==2048)
+  {
+    // 1 Copy Packet
+    int pktSize=packet->GetSize();
+    uint8_t* pkt=new uint8_t[pktSize];
+    packet->CopyData(pkt,pktSize); 
+    //for (int i = 0; i < pktSize; i ++) 
+      //std::cout << std::setfill('0') << std::setw(2) << std::hex << (int)pkt[i] << ' ';
+
+    // 2 Extract Tuple
+    uint32_t txProtocol=(uint32_t)pkt[9];// Attain transport protocol
+    uint32_t srcIp=(((uint32_t)pkt[12])<<24) + (((uint32_t)pkt[13])<<16) + (((uint32_t)pkt[14])<<8) + (uint32_t)pkt[15];
+    uint32_t dstIp=(((uint32_t)pkt[16])<<24) + (((uint32_t)pkt[17])<<16) + (((uint32_t)pkt[18])<<8) + (uint32_t)pkt[19];
+    uint32_t srcDstPort=(((uint32_t)pkt[20])<<24) + (((uint32_t)pkt[21])<<16) + (((uint32_t)pkt[22])<<8) + (uint32_t)pkt[23];
+    
+    //std::cout<<std::endl<<std::hex;
+    std::cout<<"protocol:"<<txProtocol<<std::endl;
+    std::cout<<"srcIp:"<<srcIp<<std::endl;
+    std::cout<<"dstIp:"<<dstIp<<std::endl;
+    std::cout<<"srcDstPort:"<<srcDstPort<<std::endl;
+
+    // 3 Caculate Tuple Hash
+    uint64_t hash=GetTupleHash(txProtocol,srcIp,dstIp,srcDstPort);
+
+    // 4 Count
+    m_tupleNum[hash]+=1;
+  }
+
+  //==============================================================================================================
   //********************************************************************
   bool found = false;
 
