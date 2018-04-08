@@ -27,6 +27,7 @@
 #include "ns3/callback.h"
 #include "ns3/ptr.h"
 #include "ns3/net-device.h"
+#include "ns3/keysight.h"
 #include <unordered_map>
 namespace ns3 {
 
@@ -288,14 +289,19 @@ private:
   std::vector<Ptr<Application> > m_applications; //!< Applications associated to this node
   ProtocolHandlerList m_handlers; //!< Protocol handlers in the node
   DeviceAdditionListenerList m_deviceAdditionListeners; //!< Device addition listeners in the node
+//**********************************TO REMOVE*****************************************
 public:
   uint64_t m_packetNum;
-  std::unordered_map<uint64_t,uint32_t> m_tupleNum;
-  uint64_t GetTupleHash(uint32_t protocol,uint32_t srcIp,uint32_t dstIp,uint32_t port)
+  std::unordered_map<uint32_t,uint32_t> m_tupleNum;
+  keysight_t m_keysight;
+  keysight_key_container_t m_keypool[BF_KEY_POOL_SIZE];
+  int m_poolptr;
+  /*uint64_t GetTupleHash(uint32_t protocol,uint32_t srcIp,uint32_t dstIp,uint32_t port)
   {
     uint64_t hash=((uint64_t)protocol<<32)+(uint64_t)port+((uint64_t)srcIp<<32)+(uint64_t)dstIp;
     return hash;
-  }
+  }*/
+//************************************************************************************
 };
 
 } // namespace ns3

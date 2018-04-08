@@ -36,6 +36,14 @@
 #include <cstring>
 #include <iostream>
 #include <string>
+//*****************TO REMOVE*********************
+#include "ns3/key-hash.h"
+#include <memory.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <assert.h>
+#include <time.h>
+//***********************************************
 namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("Node");
@@ -82,7 +90,8 @@ Node::GetTypeId (void)
 Node::Node()
   : m_id (0),
     m_sid (0),
-    m_packetNum(0)
+    m_packetNum(0),
+    m_poolptr(0)
 {
   NS_LOG_FUNCTION (this);
   Construct ();
@@ -91,7 +100,8 @@ Node::Node()
 Node::Node(uint32_t sid)
   : m_id (0),
     m_sid (sid),
-    m_packetNum(0)
+    m_packetNum(0),
+    m_poolptr(0)
 { 
   NS_LOG_FUNCTION (this << sid);
   Construct ();
@@ -350,16 +360,19 @@ Node::ReceiveFromDevice (Ptr<NetDevice> device, Ptr<const Packet> packet, uint16
       //std::cout << std::setfill('0') << std::setw(2) << std::hex << (int)pkt[i] << ' ';
 
     // 2 Extract Tuple
-    uint32_t txProtocol=(uint32_t)pkt[9];// Attain transport protocol
-    uint32_t srcIp=(((uint32_t)pkt[12])<<24) + (((uint32_t)pkt[13])<<16) + (((uint32_t)pkt[14])<<8) + (uint32_t)pkt[15];
-    uint32_t dstIp=(((uint32_t)pkt[16])<<24) + (((uint32_t)pkt[17])<<16) + (((uint32_t)pkt[18])<<8) + (uint32_t)pkt[19];
-    uint32_t srcDstPort=(((uint32_t)pkt[20])<<24) + (((uint32_t)pkt[21])<<16) + (((uint32_t)pkt[22])<<8) + (uint32_t)pkt[23];
-    
+    //uint32_t txProtocol=(uint32_t)pkt[9];// Attain transport protocol
+    //uint32_t srcIp=(((uint32_t)pkt[12])<<24) + (((uint32_t)pkt[13])<<16) + (((uint32_t)pkt[14])<<8) + (uint32_t)pkt[15];
+    //uint32_t dstIp=(((uint32_t)pkt[16])<<24) + (((uint32_t)pkt[17])<<16) + (((uint32_t)pkt[18])<<8) + (uint32_t)pkt[19];
+    //uint32_t srcDstPort=(((uint32_t)pkt[20])<<24) + (((uint32_t)pkt[21])<<16) + (((uint32_t)pkt[22])<<8) + (uint32_t)pkt[23];
+    uint8_t sip[4];
+    memcpy(sip,&pkt[12],4);
+    uint32_t srcIp=(((uint32_t)sip[0])<<24) + (((uint32_t)sip[1])<<16) + (((uint32_t)sip[2])<<8) + (uint32_t)sip[3];
+    std::cout<<"srcIp:"<<std::hex<<srcIp<<std::endl; 
     // 3 Caculate Tuple Hash
-    uint64_t hash=GetTupleHash(txProtocol,srcIp,dstIp,srcDstPort);
+    //uint64_t hash=GetTupleHash(txProtocol,srcIp,dstIp,srcDstPort);
 
     // 4 Count
-    m_tupleNum[hash]+=1;
+    //m_tupleNum[hash]+=1;
 
     /* 
     // *****************Output extract tuple info****************** 
@@ -374,6 +387,15 @@ Node::ReceiveFromDevice (Ptr<NetDevice> device, Ptr<const Packet> packet, uint16
   }
 
   //==============================================================================================================
+  //*******************************Way three: Bloom Filter***********************************************
+  // Target at: switch router nat stateful_firewall
+  // 1 key@switch:eth_src_mac eth_dst_mac
+     Mac48Address ethSrcMac=Mac48Address::ConvertFrom(from);
+     Mac48Address ethDstMac=Mac48Address::ConvertFrom(to);
+     std::cout<<"EthSrcMac:"<<ethSrcMac<<" EthDstMac:"<<ethDstMac<<std::endl;
+     uint8_t src_mac[6];
+     memcpy(src_mac,ethSrcMac.m_address,6);
+     keysight_count(&m_keysight,m_keypool,m_poolptr,packet,protocol,from,to);
 
   //*********************************************************************************************************************
   bool found = false;
