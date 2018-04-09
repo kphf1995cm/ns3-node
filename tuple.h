@@ -12,8 +12,8 @@
 #include "ns3/packet.h"
 
 #define TP_KEY_CONTAINER_SIZE 100000
-#define TP_KEY_POOL_SIZE  100000000
-
+//#define TP_KEY_POOL_SIZE  100000000
+#define TP_KEY_POOL_SIZE  1000000
 namespace ns3 {
 
 	typedef struct tuple_key_t {
