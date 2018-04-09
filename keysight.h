@@ -21,7 +21,7 @@
 #define WINDOW_NUM 8
 #define WINDOW_DEL 1
 
-#define P4_ID 2
+#define P4_ID 1
 
 #if P4_ID == 0
 #define KEYSIGHT_KEY switch_key_t
@@ -99,6 +99,8 @@ namespace ns3 {
 		bf_key_t key;
 		uint32_t packet_count;
 		struct keysight_key_container_t * next;
+		public:
+			keysight_key_container_t():packet_count(0),next(NULL){}
 	} keysight_key_container_t;
 
 	typedef struct keysight_t {
@@ -111,6 +113,9 @@ namespace ns3 {
 		int bf[BF_NUM][BF_SIZE];
 		uint32_t bf_len[BF_NUM];
 		keysight_key_container_t key_container[BF_KEY_CONTAINER_SIZE];
+		public:
+			keysight_t():packet_count(0),postcard_count(0),false_positive(0),
+				     false_negative(0),distinct_behavior_count(0),random_seed(0){}
 	} keysight_t;
 
 #define BF_KEY_SIZE sizeof(struct bf_key_t)

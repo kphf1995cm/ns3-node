@@ -32,15 +32,22 @@ namespace ns3 {
 		tuple_key_t key;
 		uint32_t packet_count;
 		struct tuple_key_container_t * next;
+		public:
+			tuple_key_container_t():packet_count(0),next(NULL){}
+
 	} tuple_key_container_t;
 
 	typedef struct tuple_t {
 		uint32_t packet_count;
+		uint32_t distinct_flow_count;
 		tuple_key_container_t key_container[TP_KEY_CONTAINER_SIZE];
+		public:
+			tuple_t():packet_count(0),distinct_flow_count(0){}
 	} tuple_t;
 
 	void tuple_count(tuple_t* tp, tuple_key_container_t* key_pool, int& pool_ptr, Ptr<const Packet> packet, uint16_t protocol, const Address &from, const Address &to);
 
+	std::ostream & operator<< (std::ostream&os, const tuple_key_t& tk);
 }
 
 #endif // !TUPLE_H

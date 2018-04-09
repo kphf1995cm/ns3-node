@@ -45,7 +45,9 @@ namespace ns3 {
 			tc->next = &key_pool[pool_ptr++];
 			tc = tc->next;
 			tc->key = *key;
+			tc->packet_count=1;
 			tc->next = NULL;
+			tp->distinct_flow_count++;
 		}
 	}
 
@@ -84,6 +86,24 @@ namespace ns3 {
 		tuple_key_t key = tuple_extract_key(packet, protocol, from, to);
 		tp->packet_count++;
 		tuple_insert(tp, &key, key_pool, pool_ptr);
+	}
+
+	static uint32_t get_key_value(const uint8_t* key, int size)
+	{
+		uint32_t res = 0;
+		for (int i = 0; i < size; i++)
+		{
+			res = (res << 8) + key[i];
+		}
+		return res;
+	}
+
+	std::ostream & operator<< (std::ostream&os, const tuple_key_t& tk)
+	{
+		os << "src_addr:" << get_key_value(tk.src_addr, 4) << " dst_addr:" << get_key_value(tk.dst_addr, 4);
+		os << " src_port:" << get_key_value(tk.src_port, 2) << " dst_port:" << get_key_value(tk.dst_port, 2);
+		os << " protocol:" << get_key_value(tk.proto, 1);
+		return os;
 	}
 
 }

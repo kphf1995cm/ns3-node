@@ -47,6 +47,7 @@ namespace ns3 {
 			kc = kc->next;
 			kc->key = *key;
 			kc->next = NULL;
+			kc->packet_count=1;
 			ks->distinct_behavior_count++;
 		}
 	}
