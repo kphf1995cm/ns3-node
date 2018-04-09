@@ -91,7 +91,10 @@ Node::Node()
   : m_id (0),
     m_sid (0),
     m_packetNum(0),
-    m_poolptr(0)
+//*****TO REMOVE*********
+    m_keysightPoolptr(0),
+    m_tuplePoolptr(0)
+//***********************
 {
   NS_LOG_FUNCTION (this);
   Construct ();
@@ -101,7 +104,10 @@ Node::Node(uint32_t sid)
   : m_id (0),
     m_sid (sid),
     m_packetNum(0),
-    m_poolptr(0)
+//*****TO REMOVE********
+    m_keysightPoolptr(0),
+    m_tuplePoolptr(0)
+//**********************
 { 
   NS_LOG_FUNCTION (this << sid);
   Construct ();
@@ -327,77 +333,20 @@ Node::ReceiveFromDevice (Ptr<NetDevice> device, Ptr<const Packet> packet, uint16
 
   //**************************************************Count Packet****************************************************************************************
   
-  /*
-  // **************Output Packet********************************************************
-  std::cout<<"protocol:"<<protocol<<std::endl;
-  std::cout<<"*******Node::ReceiveFromDevice**********************"<<std::endl;
-  packet->EnablePrinting();
-  packet->Print(std::cout);
-  std::cout<<std::endl;
-  std::cout<<"****************************************************"<<std::endl; 
-  // ************************************************************************************
-  */
 
   //======Way one: Count All Packet In One Counter==============
   m_packetNum++;
-  //std::cout<<"Packet Num:"<<m_packetNum<<std::endl;
-  //============================================================
 
-
-  //===========================Way two: According Tuple(srcIp,srcPort,protocol,dstIp,dstPort) Count Packet, Need Mutiple Counters======================
-  // Target at Ipv4 Packet, ignore Arp Packet
-  // Algorithm flow: 0 Select Ipv4 Packet According to protocol 1 Copy Packet 2 Extract Tuple From Received Packet 3 Caculate Tuple Hash Value 4 Count  
-  
+  // Just handle IPv4 Packet
   if(protocol==2048)
   {
-    
-    // 1 Copy Packet
-    int pktSize=packet->GetSize();
-    uint8_t* pkt=new uint8_t[pktSize];
-    packet->CopyData(pkt,pktSize); 
-
-    //for (int i = 0; i < pktSize; i ++) 
-      //std::cout << std::setfill('0') << std::setw(2) << std::hex << (int)pkt[i] << ' ';
-
-    // 2 Extract Tuple
-    //uint32_t txProtocol=(uint32_t)pkt[9];// Attain transport protocol
-    //uint32_t srcIp=(((uint32_t)pkt[12])<<24) + (((uint32_t)pkt[13])<<16) + (((uint32_t)pkt[14])<<8) + (uint32_t)pkt[15];
-    //uint32_t dstIp=(((uint32_t)pkt[16])<<24) + (((uint32_t)pkt[17])<<16) + (((uint32_t)pkt[18])<<8) + (uint32_t)pkt[19];
-    //uint32_t srcDstPort=(((uint32_t)pkt[20])<<24) + (((uint32_t)pkt[21])<<16) + (((uint32_t)pkt[22])<<8) + (uint32_t)pkt[23];
-    uint8_t sip[4];
-    memcpy(sip,&pkt[12],4);
-    uint32_t srcIp=(((uint32_t)sip[0])<<24) + (((uint32_t)sip[1])<<16) + (((uint32_t)sip[2])<<8) + (uint32_t)sip[3];
-    std::cout<<"srcIp:"<<std::hex<<srcIp<<std::endl; 
-    // 3 Caculate Tuple Hash
-    //uint64_t hash=GetTupleHash(txProtocol,srcIp,dstIp,srcDstPort);
-
-    // 4 Count
-    //m_tupleNum[hash]+=1;
-
-    /* 
-    // *****************Output extract tuple info****************** 
-    //std::cout<<std::endl<<std::hex;
-    std::cout<<"protocol:"<<txProtocol<<std::endl;
-    std::cout<<"srcIp:"<<srcIp<<std::endl;
-    std::cout<<"dstIp:"<<dstIp<<std::endl;
-    std::cout<<"srcDstPort:"<<srcDstPort<<std::endl;
-    // ************************************************************
-    */
-    
+    //=========================Way two: According Tuple Count Packet===============================
+    tuple_count(&m_tuple,m_tupleKeypool,m_tuplePoolptr,packet,protocol,from,to);
+    //=========================Way three: According Bloom Filter Count Packet======================
+    keysight_count(&m_keysight,m_keysightKeypool,m_keysightPoolptr,packet,protocol,from,to);
   }
 
-  //==============================================================================================================
-  //*******************************Way three: Bloom Filter***********************************************
-  // Target at: switch router nat stateful_firewall
-  // 1 key@switch:eth_src_mac eth_dst_mac
-     Mac48Address ethSrcMac=Mac48Address::ConvertFrom(from);
-     Mac48Address ethDstMac=Mac48Address::ConvertFrom(to);
-     std::cout<<"EthSrcMac:"<<ethSrcMac<<" EthDstMac:"<<ethDstMac<<std::endl;
-     uint8_t src_mac[6];
-     memcpy(src_mac,ethSrcMac.m_address,6);
-     keysight_count(&m_keysight,m_keypool,m_poolptr,packet,protocol,from,to);
-
-  //*********************************************************************************************************************
+  // *********************************************************************************************************************
   bool found = false;
 
   for (ProtocolHandlerList::iterator i = m_handlers.begin ();
