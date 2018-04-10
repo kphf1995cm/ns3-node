@@ -31,19 +31,7 @@
 #include "ns3/global-value.h"
 #include "ns3/boolean.h"
 #include "ns3/simulator.h"
-#include <iomanip>
-#include <cstdio>
-#include <cstring>
-#include <iostream>
-#include <string>
-//*****************TO REMOVE*********************
-#include "ns3/key-hash.h"
-#include <memory.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <assert.h>
-#include <time.h>
-//***********************************************
+
 namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("Node");
@@ -90,11 +78,7 @@ Node::GetTypeId (void)
 Node::Node()
   : m_id (0),
     m_sid (0),
-    m_packetNum(0),
-//*****TO REMOVE*********
-    m_keysightPoolptr(0),
-    m_tuplePoolptr(0)
-//***********************
+    m_packetNum(0)
 {
   NS_LOG_FUNCTION (this);
   Construct ();
@@ -103,11 +87,7 @@ Node::Node()
 Node::Node(uint32_t sid)
   : m_id (0),
     m_sid (sid),
-    m_packetNum(0),
-//*****TO REMOVE********
-    m_keysightPoolptr(0),
-    m_tuplePoolptr(0)
-//**********************
+    m_packetNum(0)
 { 
   NS_LOG_FUNCTION (this << sid);
   Construct ();
@@ -331,22 +311,9 @@ Node::ReceiveFromDevice (Ptr<NetDevice> device, Ptr<const Packet> packet, uint16
                         << device->GetIfIndex () << " (type=" << device->GetInstanceTypeId ().GetName ()
                         << ") Packet UID " << packet->GetUid ());
 
-  //**************************************************Count Packet****************************************************************************************
-  
-
-  //======Way one: Count All Packet In One Counter==============
+  //***********TO REMOVE****************************
   m_packetNum++;
-
-  // Just handle IPv4 Packet
-  if(protocol==2048)
-  {
-    //=========================Way two: According Tuple Count Packet===============================
-    tuple_count(&m_tuple,m_tupleKeypool,m_tuplePoolptr,packet,protocol,from,to);
-    //=========================Way three: According Bloom Filter Count Packet======================
-    keysight_count(&m_keysight,m_keysightKeypool,m_keysightPoolptr,packet,protocol,from,to);
-  }
-
-  // *********************************************************************************************************************
+  //************************************************
   bool found = false;
 
   for (ProtocolHandlerList::iterator i = m_handlers.begin ();
