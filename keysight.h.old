@@ -1,6 +1,6 @@
 /*
-* Created by Kuang Peng on 2018/4/8
-*/
+ * Created by Kuang Peng on 2018/4/8
+ */
 
 #ifndef KEYSIGHT_H
 #define KEYSIGHT_H
@@ -11,16 +11,15 @@
 #include "ns3/net-device.h"
 #include "ns3/packet.h"
 
-#define MAX_BF_NUM 3
-#define MAX_BF_SIZE 16*1024*1024
-#define DEFAULT_BF_MAX 1
+#define BF_NUM 3
+#define BF_SIZE 64000
+#define BF_STATE 1
 #define BF_KEY_CONTAINER_SIZE 100000
 //#define BF_KEY_POOL_SIZE  100000000
 #define BF_KEY_POOL_SIZE  1000000
-
-#define DEFAULT_PACKET_PER_WINDOW 100000
-#define DEFAULT_WINDOW_NUM 4
-#define DEFAULT_BUCKET_NUM 4
+#define WINDOW_SIZE 100000
+#define WINDOW_NUM 8
+#define WINDOW_DEL 1
 
 #define P4_ID 1
 
@@ -38,15 +37,14 @@
 #define KEYSIGHT_KEY_EXTRACTOR keysight_extract_stateful_firewall_key
 #endif
 
+#define UPDATE_ALG KEYSIGHT_BSBFSD
+
 namespace ns3 {
 
 	enum update_alg {
 		BSBF = 0,
 		BSBFSD,
 		RLBSBF,
-		STABLE_BF,
-		IDEAL_BF,
-		KEYSIGHT_SBF,
 		KEYSIGHT_BSBF,
 		KEYSIGHT_BSBFSD,
 		KEYSIGHT_RLBSBF,
@@ -55,8 +53,6 @@ namespace ns3 {
 		KEYSIGHT_NEG_RLBSBF,
 		UPDATE_ALG_NUM
 	};
-
-	extern char* BF_ALG_NAMES[];
 
 	typedef struct switch_key_t {
 		uint8_t eth_src_mac[6];
@@ -83,7 +79,7 @@ namespace ns3 {
 
 	} nat_key_t;
 
-	typedef struct stateful_firewall_key_t {
+	typedef struct stateful_firewall_key {
 		// ipv4
 		uint8_t src_addr[4];
 		uint8_t dst_addr[4];
@@ -103,8 +99,8 @@ namespace ns3 {
 		bf_key_t key;
 		uint32_t packet_count;
 		struct keysight_key_container_t * next;
-	public:
-		keysight_key_container_t() :packet_count(0), next(NULL) {}
+		public:
+			keysight_key_container_t():packet_count(0),next(NULL){}
 	} keysight_key_container_t;
 
 	typedef struct keysight_t {
@@ -114,38 +110,21 @@ namespace ns3 {
 		uint32_t false_negative;
 		uint32_t distinct_behavior_count;
 		uint32_t random_seed;
-		uint64_t bf[MAX_BF_NUM][MAX_BF_SIZE];
-		uint32_t bf_len[MAX_BF_NUM];
+		int bf[BF_NUM][BF_SIZE];
+		uint32_t bf_len[BF_NUM];
 		keysight_key_container_t key_container[BF_KEY_CONTAINER_SIZE];
-
-		int enable;
-		uint32_t bf_alg;
-		uint32_t bf_size;
-		uint32_t bf_num;
-		uint32_t bf_max;
-		uint32_t packet_per_window;
-		uint32_t window_num;
-		uint32_t bucket_num;
-
-	public:
-		keysight_t() :packet_count(0), postcard_count(0), false_positive(0),
-			false_negative(0), distinct_behavior_count(0), random_seed(0) 
-		{}
-		keysight_t(uint32_t wbf_alg,uint32_t wbf_size,uint32_t wbf_num,uint32_t wbf_max,uint32_t wpacket_per_window,uint32_t wwindow_num,uint32_t wbucket_num)
-			:packet_count(0), postcard_count(0), false_positive(0),
-			false_negative(0), distinct_behavior_count(0), random_seed(0),
-			bf_alg(wbf_alg),
-			bf_size(wbf_size),bf_num(wbf_num),bf_max(wbf_max),
-			packet_per_window(wpacket_per_window),window_num(wwindow_num),bucket_num(wbucket_num)
-		{}
+		public:
+			keysight_t():packet_count(0),postcard_count(0),false_positive(0),
+				     false_negative(0),distinct_behavior_count(0),random_seed(0){}
 	} keysight_t;
 
 #define BF_KEY_SIZE sizeof(struct bf_key_t)
 
-	void keysight_count(keysight_t* ks, keysight_key_container_t* key_pool, int& pool_ptr, Ptr<const Packet> packet, uint16_t protocol, const Address &from, const Address &to);
+	void keysight_count(keysight_t* ks, keysight_key_container_t* key_pool,int& pool_ptr,Ptr<const Packet> packet, uint16_t protocol,const Address &from, const Address &to);
+
+	void keysight_sbf_count(keysight_t* ks,keysight_key_container_t* key_pool, int& pool_ptr,Ptr<const Packet> packet, uint16_t protocol, const Address &from, const Address &to);
 
 }
 #endif // !KEYSIGHT_H
-
 
 

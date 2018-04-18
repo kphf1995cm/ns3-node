@@ -43,6 +43,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <time.h>
+#include "keysight_para.h"
 //***********************************************
 namespace ns3 {
 
@@ -93,7 +94,9 @@ Node::Node()
     m_packetNum(0),
 //*****TO REMOVE*********
     m_keysightPoolptr(0),
-    m_tuplePoolptr(0)
+    m_tuplePoolptr(0),
+    //m_keysight(BSBFSD,MAX_BF_SIZE,MAX_BF_NUM,DEFAULT_BF_MAX,DEFAULT_PACKET_PER_WINDOW,DEFAULT_WINDOW_NUM,DEFAULT_BUCKET_NUM)
+    m_keysight(KeysightPara::g_BF_ALG,KeysightPara::g_BF_SIZE,KeysightPara::g_BF_NUM,KeysightPara::g_BF_MAX,KeysightPara::g_PACKET_PER_WINDOW,KeysightPara::g_WINDOW_NUM,KeysightPara::g_BUCKET_NUM)
 //***********************
 {
   NS_LOG_FUNCTION (this);
@@ -106,7 +109,9 @@ Node::Node(uint32_t sid)
     m_packetNum(0),
 //*****TO REMOVE********
     m_keysightPoolptr(0),
-    m_tuplePoolptr(0)
+    m_tuplePoolptr(0),
+    //m_keysight(BSBFSD,MAX_BF_SIZE,MAX_BF_NUM,DEFAULT_BF_MAX,DEFAULT_PACKET_PER_WINDOW,DEFAULT_WINDOW_NUM,DEFAULT_BUCKET_NUM)
+    m_keysight(KeysightPara::g_BF_ALG,KeysightPara::g_BF_SIZE,KeysightPara::g_BF_NUM,KeysightPara::g_BF_MAX,KeysightPara::g_PACKET_PER_WINDOW,KeysightPara::g_WINDOW_NUM,KeysightPara::g_BUCKET_NUM)
 //**********************
 { 
   NS_LOG_FUNCTION (this << sid);
@@ -332,7 +337,12 @@ Node::ReceiveFromDevice (Ptr<NetDevice> device, Ptr<const Packet> packet, uint16
                         << ") Packet UID " << packet->GetUid ());
 
   //**************************************************Count Packet****************************************************************************************
-  
+   // ****************TO REMOVE***************************
+   /* packet->EnablePrinting();
+   packet->Print(std::cout);
+   std::cout<<std::endl;
+   std::cout<<"Packet Size:"<<packet->GetSize()<<std::endl; */
+   // *****************************************************
 
   //======Way one: Count All Packet In One Counter==============
   m_packetNum++;
